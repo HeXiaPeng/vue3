@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "esnext", // 使用ECMA目标版本
+    "module": "esnext", // 使用模块代码生成规范
+    "moduleResolution": "node", // 制定模块解析策略
+    "outDir": "dist", // 输出制定目录
+    "resolveJsonModule": true, // 允许导入 json 文件
+    "strict": false, // 关闭严格模式
+    "lib": ["ESNext", "DOM"], // 指定要使用的库文件
+    "paths": {
+      // 路径映射，让你在代码中用简洁的别名代替冗长的相对路径，同时让 TypeScript 能正确识别这些别名对应的实际文件位置
+      "@vue/*": ["packages/*/src"]
+    },
+    "baseUrl": "./"
+  }
+}
