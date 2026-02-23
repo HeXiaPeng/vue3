@@ -48,7 +48,6 @@ export function link(dep, sub) {
    * 2. 如果尾节点还有 nextDep，尝试复用尾节点的 nextDep
    */
   const nextDep = currentDep === undefined ? sub.deps : currentDep.nextDep
-  debugger
   if (nextDep && nextDep.dep === dep) {
     console.log('复用节点', nextDep)
     sub.depsTail = nextDep
