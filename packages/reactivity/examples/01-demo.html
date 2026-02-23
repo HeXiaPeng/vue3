@@ -14,10 +14,19 @@
       console.log(ref, effect)
 
       const count = ref(0)
-
-      effect(() => {
-        console.log('count.value ==>', count.value)
-      })
+      const runner = effect(
+        () => {
+          console.log('count.value ==>', count.value)
+          return 1
+        },
+        {
+          scheduler() {
+            const newValue = runner()
+            console.log('触发了调度器', newValue)
+            console.log('schedule ==>', count.value)
+          },
+        },
+      )
 
       setTimeout(() => {
         count.value = 1

@@ -24,7 +24,7 @@ class RefImpl {
 
   get value() {
     // 收集依赖
-    console.log('有人访问我了', activeSub)
+    // console.log('有人访问我了', activeSub)
     if (activeSub) {
       trackRef(this)
     }
