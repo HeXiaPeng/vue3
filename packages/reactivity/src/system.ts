@@ -13,9 +13,10 @@ interface Dep {
 /**
  * 订阅者，我依赖谁
  */
-interface Sub {
+export interface Sub {
   deps: Link | undefined
   depsTail: Link | undefined
+  notify(): void
 }
 
 /**
@@ -49,7 +50,6 @@ export function link(dep, sub) {
    */
   const nextDep = currentDep === undefined ? sub.deps : currentDep.nextDep
   if (nextDep && nextDep.dep === dep) {
-    console.log('复用节点', nextDep)
     sub.depsTail = nextDep
     return
   }
@@ -57,7 +57,7 @@ export function link(dep, sub) {
   const newLink = {
     sub: sub,
     dep: dep,
-    nextDep: undefined,
+    nextDep,
     nextSub: undefined,
     prevSub: undefined,
   }
@@ -108,4 +108,64 @@ export function propagate(subs) {
   }
 
   queueEffect.forEach(effect => effect.notify())
+}
+
+/**
+ * 开始追踪依赖
+ * @param sub
+ */
+export function startTrack(sub) {
+  sub.depsTail = undefined
+}
+
+/**
+ * 结束追踪
+ * @param sub
+ */
+export function endTrack(sub) {
+  /**
+   * depsTail 有，并且还有 nextDep，我们应该把他们的依赖关系清理掉
+   * depsTail 没有，并且头节点有，那就把所有内容都清理掉
+   */
+  const depsTail = sub.depsTail
+  if (depsTail && depsTail.nextDep) {
+    clearTracking(depsTail.nextDep)
+    depsTail.nextDep = undefined
+  } else if (!depsTail && sub.deps) {
+    clearTracking(sub.deps)
+    sub.deps = undefined
+  }
+}
+
+/**
+ * 指针删除节点
+ * @param link
+ */
+export function clearTracking(link: Link) {
+  while (link) {
+    const { sub, prevSub, nextSub, nextDep, dep } = link
+    /**
+     * 清楚上一个节点对删除节点的依赖
+     * 如果没有上一个节点，当前为头节点，需要把 dep.subs 指向下一个节点
+     */
+    if (prevSub) {
+      prevSub.nextSub = nextSub
+      link.nextSub = undefined
+    } else {
+      dep.subs = nextSub
+    }
+
+    if (nextSub) {
+      nextSub.prevSub = prevSub
+      link.prevSub = undefined
+    } else {
+      dep.subsTail = prevSub
+    }
+
+    link.dep = link.sub = undefined
+
+    link.nextDep = undefined
+
+    link = nextDep
+  }
 }

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+    <style>
+      body {
+        padding: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <button id="flagBtn">update flag</button>
+    <button id="nameBtn">update name</button>
+    <button id="ageBtn">update age</button>
+
+    <script type="module">
+      // 05-1-dep和s
+      import { ref, effect } from '../dist/reactivity.esm.js'
+
+      const flag = ref(true)
+      const name = ref('hxp')
+      const age = ref(18)
+
+      effect(() => {
+        console.count('effect')
+        if (flag.value) {
+          app.innerHTML = name.value
+        } else {
+          app.innerHTML = age.value
+        }
+      })
+
+      flagBtn.onclick = () => {
+        debugger
+        flag.value = !flag.value
+      }
+
+      nameBtn.onclick = () => {
+        name.value = name.value + Math.random()
+      }
+
+      ageBtn.onclick = () => {
+        age.value = age.value + Math.random()
+      }
+    </script>
+  </body>
+</html>
