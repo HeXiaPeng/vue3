@@ -24,7 +24,6 @@ class ReactiveEffect {
     try {
       return this.fn()
     } finally {
-      debugger
       endTrack(this)
       // 执行完毕，恢复之前的effect
       activeSub = prevSub
