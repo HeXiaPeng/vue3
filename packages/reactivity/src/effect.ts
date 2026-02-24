@@ -12,6 +12,8 @@ class ReactiveEffect {
    * 依赖像链表的尾节点
    */
   depsTail: Link | undefined
+
+  tracking = false
   constructor(public fn) {}
 
   run() {

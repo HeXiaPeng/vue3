@@ -120,7 +120,10 @@ export function propagate(subs) {
   let link = subs
   let queueEffect = []
   while (link) {
-    queueEffect.push(link.sub)
+    const sub = link.sub
+    if (!sub.tracking) {
+      queueEffect.push(link.sub)
+    }
     link = link.nextSub
   }
 
@@ -132,6 +135,7 @@ export function propagate(subs) {
  * @param sub
  */
 export function startTrack(sub) {
+  sub.tracking = true
   sub.depsTail = undefined
 }
 
@@ -140,11 +144,12 @@ export function startTrack(sub) {
  * @param sub
  */
 export function endTrack(sub) {
+  sub.tracking = false
+  const depsTail = sub.depsTail
   /**
    * depsTail 有，并且还有 nextDep，我们应该把他们的依赖关系清理掉
    * depsTail 没有，并且头节点有，那就把所有内容都清理掉
    */
-  const depsTail = sub.depsTail
   if (depsTail && depsTail.nextDep) {
     clearTracking(depsTail.nextDep)
     depsTail.nextDep = undefined
