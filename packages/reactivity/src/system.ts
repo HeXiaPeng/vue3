@@ -3,7 +3,7 @@ import { ReactiveEffect } from 'vue'
 /**
  * 依赖项，谁依赖了我
  */
-interface Dep {
+interface Dependency {
   // 订阅者链表的头节点
   subs: Link | undefined
   // 订阅者；链表的尾节点
@@ -30,7 +30,7 @@ export interface Link {
   //上一个订阅者点
   prevSub: Link | undefined
   // 依赖项
-  dep: Dep
+  dep: Dependency
   // 下一个依赖项节点
   nextDep: Link | undefined
 }

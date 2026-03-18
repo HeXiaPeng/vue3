@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <script type="module">
+      import { reactive, effect, ref } from '../dist/reactivity.esm.js'
+      // import {
+      //   reactive,
+      //   effect,
+      // } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+      const a = ref(0)
+
+      const state = reactive({
+        a: {
+          b: 0,
+        },
+      })
+
+      effect(() => {
+        console.log('effect ==>', state.a.b)
+      })
+
+      setTimeout(() => {
+        console.log('更新')
+        state.a.b = 1
+
+        // a.value = 1
+        console.log(a)
+      }, 1000)
+    </script>
+  </body>
+</html>

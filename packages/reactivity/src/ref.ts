@@ -1,5 +1,7 @@
+import { hasChange, isObject } from '@vue/shared'
 import { activeSub, effect } from './effect'
 import { Link, link, propagate } from './system'
+import { reactive } from 'vue'
 enum ReactiveFlags {
   IS_REF = '__v_isRef',
 }
@@ -19,7 +21,7 @@ class RefImpl {
   // 订阅者链表的尾节点，
   subsTail: Link
   constructor(value) {
-    this._value = value
+    this._value = isObject(value) ? reactive(value) : value
   }
 
   get value() {
@@ -32,10 +34,12 @@ class RefImpl {
   }
 
   set value(newValue) {
-    // 触发依赖
-    this._value = newValue
-
-    traggerRef(this)
+    const oldValue = this._value
+    if (hasChange(newValue, oldValue)) {
+      // 触发依赖
+      this._value = newValue
+      traggerRef(this)
+    }
   }
 }
 
