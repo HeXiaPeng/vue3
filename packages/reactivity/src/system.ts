@@ -3,7 +3,7 @@ import { ReactiveEffect } from 'vue'
 /**
  * 依赖项，谁依赖了我
  */
-interface Dependency {
+export interface Dependency {
   // 订阅者链表的头节点
   subs: Link | undefined
   // 订阅者；链表的尾节点
@@ -16,7 +16,7 @@ interface Dependency {
 export interface Sub {
   deps: Link | undefined
   depsTail: Link | undefined
-  notify(): void
+  tracking: boolean
 }
 
 /**
@@ -57,6 +57,8 @@ export function link(dep, sub) {
     return
   }
   //endregion
+
+  // 如果 sub 和 dep 建立过关联关系，直接返回
 
   /**
    * 如果存在linkPool，则复用
@@ -111,6 +113,17 @@ export function link(dep, sub) {
   //endregin
 }
 
+function processComputedUpdate(sub) {
+  /**
+   * 更新计算属性
+   * 1. 调用 update
+   * 2. 通知 subs 链表上的所有 sub，重新执行
+   */
+  if (sub.subs && sub.update()) {
+    propagate(sub.subs)
+  }
+}
+
 /**
  * 传播更新函数
  * @param subs
@@ -121,8 +134,13 @@ export function propagate(subs) {
   let queueEffect = []
   while (link) {
     const sub = link.sub
-    if (!sub.tracking) {
-      queueEffect.push(link.sub)
+    if (!sub.tracking && !sub.dirty) {
+      sub.dirty = true
+      if ('update' in sub) {
+        processComputedUpdate(sub)
+      } else {
+        queueEffect.push(link.sub)
+      }
     }
     link = link.nextSub
   }
@@ -146,6 +164,8 @@ export function startTrack(sub) {
 export function endTrack(sub) {
   sub.tracking = false
   const depsTail = sub.depsTail
+  // 追踪完了，不脏了
+  sub.dirty = false
   /**
    * depsTail 有，并且还有 nextDep，我们应该把他们的依赖关系清理掉
    * depsTail 没有，并且头节点有，那就把所有内容都清理掉
