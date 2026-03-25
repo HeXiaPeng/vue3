@@ -48,6 +48,7 @@ function createReactiveObject(target) {
 
   // 保存 target 和 proxy 之间的关联关系
   reactiveMap.set(target, proxy)
+  reactiveSet.add(proxy)
   return proxy
 }
 

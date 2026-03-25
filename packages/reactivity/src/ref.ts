@@ -1,7 +1,7 @@
 import { hasChange, isObject } from '@vue/shared'
 import { activeSub } from './effect'
 import { Dependency, Link, link, propagate } from './system'
-import { reactive } from 'vue'
+import { reactive } from './reactive'
 export enum ReactiveFlags {
   IS_REF = '__v_isRef',
 }
