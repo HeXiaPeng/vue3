@@ -76,14 +76,39 @@ export function trigger(target, key) {
      */
     return
   }
-  const dep = depsMap.get(key)
-  if (!dep) {
-    // dep 不存在，表示这个 key 没有在 sub 中访问过
-    return
-  }
 
-  /**
-   * 找到 dep 的 subs 通知它们重新执行
-   */
-  propagate(dep.subs)
+  const targetIsArray = Array.isArray(target)
+  if (targetIsArray && key === 'length') {
+    /**
+     * 更新数据的length
+     * 更新前： length: 4 => ['a', 'b', 'c', 'd']
+     * 更新后： length: 2 => ['a', 'b']
+     * 得出结论：要通知访问了 c 和 d 的 effect 重新执行，就是访问了大于等于 length 的索引
+     * depsMap = {
+     *  0: Dep,
+     *  1: Dep,
+     *  2: Dep,
+     *  length: Dep
+     * }
+     */
+    depsMap.forEach((dep, depKey) => {
+      if (depKey >= length || depKey === 'length') {
+        // 通知访问了大于等于 length 的 effect 重新执行
+        // 以及访问了 length 的 effect 重新执行
+        propagate(dep.subs)
+      }
+    })
+  } else {
+    // 不是数组，或者数组更新的不是length
+    const dep = depsMap.get(key)
+    if (!dep) {
+      // dep 不存在，表示这个 key 没有在 sub 中访问过
+      return
+    }
+
+    /**
+     * 找到 dep 的 subs 通知它们重新执行
+     */
+    propagate(dep.subs)
+  }
 }

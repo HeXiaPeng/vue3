@@ -25,10 +25,11 @@ export const mutableHandlers = {
   },
   set(target, key, newValue, receiver) {
     const oldValue = target[key]
-    /**
-     * 触发更新，set 的时候，通知之前的依赖，重新执行
-     */
-    const res = Reflect.set(target, key, newValue, receiver)
+
+    //regin 为了处理隐式更新数组
+    const targetIsArray = Array.isArray(target)
+    const oldLength = targetIsArray ? target.length : 0
+    //endregin
 
     /**
      * 如果更新了 state.a 它之前是个 ref，那么会修改初始的 ref.value 的值，等于 newValue
@@ -42,14 +43,33 @@ export const mutableHandlers = {
        * a.value = 1
        */
       oldValue.value = newValue
-      return res
+      return true
     }
+
+    /**
+     * 触发更新，set 的时候，通知之前的依赖，重新执行
+     */
+    const res = Reflect.set(target, key, newValue, receiver)
+
     if (hasChange(newValue, oldValue)) {
       /**
        * 新值和老值不一样，触发更新
        * 先set，在通知执行
        */
       trigger(target, key)
+    }
+
+    const newLength = targetIsArray ? target.length : 0
+
+    if (targetIsArray && newLength !== oldLength && key !== length) {
+      /**
+       * 隐式更新 length
+       * 更新前： length = 4 => ['a', 'b', 'c', 'd']
+       * 更新后： length = 5 => ['a', 'b', 'c', 'd', 'e']
+       * 更新动作，以 push 为例，追加了一个 e
+       * 隐式更新 length 的方法: push, pop, shift, unshift
+       */
+      trigger(target, 'length')
     }
     return res
   },
