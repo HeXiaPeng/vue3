@@ -3,9 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <title>Title</title>
+    <style>
+      body {
+        padding: 150px;
+      }
+      #app,
+      #div {
+        width: 100px;
+        height: 100px;
+        background: red;
+      }
+      #dv {
+        width: 100px;
+        height: 100px;
+        background: #000;
+      }
+    </style>
   </head>
   <body>
+    <div id="app"></div>
+    <div id="dv"></div>
+    <button id="btn">按钮</button>
     <script type="module">
+      import { ref, watch } from '../dist/reactivity.esm.js'
+
+      const flag = ref(true)
+
+      watch(
+        flag,
+        (newValue, oldValue, onCleanup) => {
+          const dom = newValue ? app : dv
+          function handler() {
+            console.log(newValue ? '点击了 app' : '点击了dv')
+          }
+
+          dom.addEventListener('click', handler)
+          onCleanup(() => {
+            dom.removeEventListener('click', handler)
+          })
+        },
+        {
+          immediate: true,
+        },
+      )
+
+      btn.onclick = () => {
+        flag.value = !flag.value
+      }
+    </script>
+    <!-- <script type="module">
       // import {
       //   effect,
       //   ref,
@@ -38,6 +84,6 @@
         console.log('=======>')
         state.value.a.b.c = 2
       }, 1000)
-    </script>
+    </script> -->
   </body>
 </html>
