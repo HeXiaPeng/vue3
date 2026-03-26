@@ -75,3 +75,74 @@ export function traggerRef(dep) {
     propagate(dep.subs)
   }
 }
+
+class ObjectRefImpl {
+  [ReactiveFlags.IS_REF] = true
+  constructor(
+    public _object,
+    public _key,
+  ) {}
+
+  get value() {
+    return this._object[this._key]
+  }
+  set value(newValue) {
+    this._object[this._key] = newValue
+  }
+}
+
+export function toRef(target, key) {
+  return new ObjectRefImpl(target, key)
+}
+
+export function toRefs(target) {
+  const res = {}
+
+  for (const key in target) {
+    res[key] = new ObjectRefImpl(target, key)
+  }
+
+  return res // name => ObjectRefImpl, age => ObjectRefImpl
+}
+
+export function unref(value) {
+  return isRef(value) ? value.value : value
+}
+
+/**
+ * 使用 proxyRefs 不用每次都使用 value(p.value.parm => p.parm)
+ * @param target
+ * @returns
+ */
+export function proxyRefs(target) {
+  return new Proxy(target, {
+    get(...args) {
+      /**
+       * 自动解包 ref
+       * 如果这个 target[key] 是一个 ref，那就返回 ref.value, 否则返回 target[key]
+       */
+      const res = Reflect.get(...args)
+
+      return unref(res)
+    },
+    set(target, key, newValue, receiver) {
+      const oldValue = target[key]
+      /**
+       * 如果更新了 state.a 它之前是个 ref， 那么就会修改 ref.value 的值等于 newValue
+       * 如果 newValue 是一个 ref，那就算了
+       */
+      if (isRef(oldValue) && !isRef(newValue)) {
+        /**
+         * const a = ref(0)
+         * target = { a }
+         * 更新 target.a = 1, 它就等于更新了 a.value
+         * a.value = 1
+         */
+        oldValue.value = newValue
+        return true
+      }
+
+      return Reflect.set(target, key, newValue, receiver)
+    },
+  })
+}

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <script type="module">
+      import {
+        reactive,
+        effect,
+        toRef,
+        toRefs,
+      } from '../dist/reactivity.esm.js'
+
+      const state = reactive({
+        name: '张三',
+        age: 18,
+      })
+
+      // const name = toRef(state, 'name')
+
+      const { name, age } = toRefs(state)
+
+      console.log('name ==>', name)
+      console.log('age ==>', age)
+
+      effect(() => {
+        console.log(name.value)
+        console.log(age.value)
+      })
+
+      setTimeout(() => {
+        name.value = 'xiapeng'
+      }, 1000)
+    </script>
+  </body>
+</html>
