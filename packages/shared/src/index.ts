@@ -19,3 +19,5 @@ export function isFunction(value) {
 export function isOn(key) {
   return /^on[A-Z]/.test(key)
 }
+
+export const isArray = Array.isArray
