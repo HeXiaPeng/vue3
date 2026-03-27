@@ -8,7 +8,7 @@ const renderOptions = { patchProp, ...nodeOps }
 
 const renderer = createRenderer(renderOptions)
 export function render(vnode, container) {
-  createRenderer.render(vnode, container)
+  renderer.render(vnode, container)
 }
 
 export { renderOptions }

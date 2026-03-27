@@ -6,7 +6,7 @@ import { isArray, isString, ShapeFlags } from '@vue/shared'
  * @param props 节点属性
  * @param children 子节点v
  */
-export function createVNode(type, props?, children?) {
+export function createVNode(type, props?, children = null) {
   let shapeFlag
 
   if (isString(type)) {

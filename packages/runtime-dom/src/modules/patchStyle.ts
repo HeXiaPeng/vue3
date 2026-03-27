@@ -14,7 +14,7 @@ export function patchStyle(el, prevValue, nextValue) {
      * 去除之前有的，现在没有的
      */
     for (const key in prevValue) {
-      if (!(key in nextValue)) {
+      if (nextValue?.[key] == null) {
         style[key] = null
       }
     }
