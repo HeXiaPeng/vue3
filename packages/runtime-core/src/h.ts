@@ -1,4 +1,5 @@
-import { isArray, isObject } from '@vue/shared'
+import { isArray, isObject, ShapeFlags } from '@vue/shared'
+import { createVNode } from './vnode'
 /**
  * h 函数的使用方法
  * 1. h('div', 'hello world') 第二个参数为子节点
@@ -57,26 +58,4 @@ export function h(type, propsOrChildren?, children?) {
  */
 function isVNode(value) {
   return value?.__v_isVNode
-}
-
-/**
- * 创建虚拟节点底层方法
- * @param type 节点类型
- * @param props 节点属性
- * @param children 子节点v
- */
-function createVNode(type, props?, children?) {
-  const vnode = {
-    // 证明是一个虚拟节点
-    __v_isVNode: true,
-    type,
-    props,
-    children,
-    // 做 diff 用的
-    key: props?.key,
-    // 虚拟节点要挂载的地方
-    el: null,
-    shapeFlag: 9,
-  }
-  return vnode
 }

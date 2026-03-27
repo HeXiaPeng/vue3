@@ -1,0 +1,37 @@
+import { isArray, isString, ShapeFlags } from '@vue/shared'
+
+/**
+ * 创建虚拟节点底层方法
+ * @param type 节点类型
+ * @param props 节点属性
+ * @param children 子节点v
+ */
+export function createVNode(type, props?, children?) {
+  let shapeFlag
+
+  if (isString(type)) {
+    shapeFlag = ShapeFlags.ELEMENT
+  }
+
+  if (isString(children)) {
+    shapeFlag |= ShapeFlags.TEXT_CHILDREN
+  } else if (isArray(children)) {
+    shapeFlag |= ShapeFlags.ARRAY_CHILDREN
+  }
+  const vnode = {
+    // 证明是一个虚拟节点
+    __v_isVNode: true,
+    // div p span
+    type,
+    props,
+    // hello world
+    children,
+    // 做 diff 用的
+    key: props?.key,
+    // 虚拟节点要挂载的地方
+    el: null,
+    // 如果为9，表示type 是一个 dom 元素，children 是一个字符串
+    shapeFlag: shapeFlag,
+  }
+  return vnode
+}
