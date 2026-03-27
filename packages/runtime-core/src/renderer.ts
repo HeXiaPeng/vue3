@@ -1,3 +1,3 @@
-export function createRender(options) {
+export function createRenderer(options) {
   console.log(options)
 }

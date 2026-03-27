@@ -5,31 +5,37 @@
     <title>Title</title>
   </head>
   <body>
+    <div id="app"></div>
     <script type="module">
-      import { ref, effect } from '../dist/reactivity.esm.js'
-      // import {
-      //   ref,
-      //   effect,
-      // } from '../../../node_modules/vue/dist/vue.esm-browser.js'
-      console.log(ref, effect)
+      import {
+        h,
+        render,
+        createRenderer,
+      } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+      import { renderOptions } from '../dist/vue.esm.js'
 
-      const count = ref(0)
-      const runner = effect(
-        () => {
-          console.log('count.value ==>', count.value)
-          return 1
-        },
+      const renderer = createRenderer(renderOptions)
+
+      const vnode = h(
+        'div',
         {
-          scheduler() {
-            const newValue = runner()
-            console.log('触发了调度器', newValue)
-            console.log('schedule ==>', count.value)
-          },
+          id: 1,
         },
+        'hello wold',
       )
 
+      const vnode2 = h(
+        'div',
+        {
+          id: 2,
+        },
+        'hello wold',
+      )
+
+      renderer.render(vnode, app)
+
       setTimeout(() => {
-        count.value = 1
+        renderer.render(vnode2, app)
       }, 1000)
     </script>
   </body>

@@ -1,5 +1,8 @@
+import { patchProp } from './patchProps'
 import { nodeOps } from './nodeOps'
 
 export * from '@vue/runtime-core'
 
-export { nodeOps }
+const renderOptions = { patchProp, ...nodeOps }
+
+export { renderOptions }
