@@ -179,6 +179,14 @@ export function createRenderer(options) {
      * 根据双端对比，得出结论：
      * i > e1 新的多，要挂载新的节点
      * i > e2 老的多，新的少，要把老的里面多于的卸载，卸载的范围是 i - e1
+     *
+     * 2. 乱序对比
+     * c1 => [a, (b, c, d), e]
+     * c2 => [a, (c, d, b), c]
+     *
+     * 开始时： i = 0, e1 = 4, e2 = 4
+     * 双端对比完结果：i = 1, e1 = 3, e2 = 3
+     *
      */
 
     // 开始对比的下标
@@ -249,6 +257,69 @@ export function createRenderer(options) {
       while (i <= e1) {
         unmount(c1[i])
         i++
+      }
+    } else {
+      /**
+       * 2. 乱序对比
+       * c1 => [a, (b, c, d), e]
+       * c2 => [a, (c, d, b), c]
+       *
+       * 开始时： i = 0, e1 = 4, e2 = 4
+       * 双端对比完结果：i = 1, e1 = 3, e2 = 3
+       *
+       * 找到key 相同的虚拟节点，让他们 patch 一下
+       */
+
+      // 老节点开始查找位置
+      let s1 = i
+      // 新节点开始查找位置
+      let s2 = i
+
+      /**
+       * 做一份新的子节点的key和index之间的映射关系
+       * map: {
+       *  c: 1
+       *  b: 2
+       *  a: 3
+       * }
+       */
+
+      /**
+       * 遍历新的 s2 - e2 之间，这些还没更新，做一份key => index map
+       */
+      const keyToNewIndexMap = new Map()
+      for (let j = s2; j <= e2; j++) {
+        const n2 = c2[j]
+        keyToNewIndexMap.set(n2.key, j)
+      }
+
+      for (let j = s1; j <= e1; j++) {
+        const n1 = c1[j]
+        // 看一下这个 key 在新的里面有没有
+        const newIndex = keyToNewIndexMap.get(n1.key)
+        if (newIndex != null) {
+          // 如果有就 patch
+          patch(n1, c2[newIndex], container)
+        } else {
+          // 老的有，新的没有，卸载
+          unmount(n1)
+        }
+      }
+
+      for (let j = e2; j >= s2; j--) {
+        /**
+         * 倒序插入
+         */
+        const n2 = c2[j]
+        // 拿到它的下一个子元素
+        const anchor = c2[j + 1]?.el || null
+        if (n2.el) {
+          // 依次进行一个倒序插入，保证顺序
+          hostInsert(n2.el, container, anchor)
+        } else {
+          // 新的有，老的没有，重新挂载
+          patch(null, n2, container, anchor)
+        }
       }
     }
     console.log(i, e1, e2)
