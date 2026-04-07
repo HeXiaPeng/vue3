@@ -48,7 +48,7 @@ export function createRenderer(options) {
     }
   }
 
-  const mountElement = (vnode, container) => {
+  const mountElement = (vnode, container, anchor) => {
     /**
      * 1. 设置一个 dom 节点
      * 2. 设置它的 props
@@ -76,7 +76,7 @@ export function createRenderer(options) {
     }
 
     // 将 el 挂载到 container 中
-    hostInsert(el, container)
+    hostInsert(el, container, anchor)
   }
 
   const patchProps = (el, oldProps, newProps) => {
@@ -91,7 +91,7 @@ export function createRenderer(options) {
       }
     }
     if (newProps) {
-      for (const key in oldProps) {
+      for (const key in newProps) {
         hostPatchProp(el, key, oldProps?.[key], newProps[key])
       }
     }
@@ -139,7 +139,9 @@ export function createRenderer(options) {
         if (prevShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
           // 新的是数组，老的也是数组，全量diff
           if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
-            // TODO
+            // 老的是数组，新的也是数组
+            // TODO 全量Diff
+            patchKeyedChildren(n1.children, n2.children, el)
           } else {
             // 新的不是数组，卸载老的数组
             unmountChildren(n1.children)
@@ -153,6 +155,103 @@ export function createRenderer(options) {
         }
       }
     }
+  }
+
+  const patchKeyedChildren = (c1, c2, container) => {
+    /**
+     * 全量diff
+     *
+     * 1. 双端diff
+     *
+     * 1.1 头部对比
+     * c1 = [a, b]
+     * c2 = [a, b, c]
+     *
+     * 开始时： i = 0, e1 = 1, e2 = 2
+     * 结束时： i = 2, e1 = 1, e2 = 2
+     *
+     * 1.2 尾部对比
+     * c1 = [a, b]
+     * c2 = [c, a, b]
+     * 开始时：i = 0, e1 = 1, e2 = 2
+     * 结束时：i = 0, e1 = -1, e2 = 0
+     *
+     * 根据双端对比，得出结论：
+     * i > e1 新的多，要挂载新的节点
+     * i > e2 老的多，新的少，要把老的里面多于的卸载，卸载的范围是 i - e1
+     */
+
+    // 开始对比的下标
+    let i = 0
+    // 老的子节点最后一个元素的下标
+    let e1 = c1.length - 1
+    let e2 = c2.length - 1
+
+    /**
+     * 1.1 头部对比
+     * c1 = [a, b]
+     * c2 = [a, b, c]
+     *
+     * 开始时： i = 0, e1 = 1, e2 = 2
+     * 结束时： i = 2, e1 = 1, e2 = 2
+     */
+    while (i <= e1 && i <= e2) {
+      // 如果 n1 和 n2 属于同一个类型的节点，那就可以更新，更新完了，对比下一个节点
+      const n1 = c1[i]
+      const n2 = c2[i]
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      } else {
+        break
+      }
+      i++
+    }
+
+    /**
+     * 1.2 尾部对比
+     * c1 = [a, b]
+     * c2 = [c, a, b]
+     *
+     * 开始时：i = 0, e1 = 1, e2 = 2
+     * 结束时：i = 0, e1 = -1, e2 = 0
+     */
+    while (i <= e1 && i <= e2) {
+      // 如果 n1 和 n2 属于同一个类型的节点，那就可以更新，更新完了，对比上一个节点
+      const n1 = c1[e1]
+      const n2 = c2[e2]
+      if (isSameVNodeType(n1, n2)) {
+        patch(n1, n2, container)
+      } else {
+        break
+      }
+      e1--
+      e2--
+    }
+
+    if (i > e1) {
+      /**
+       * 根据双端对比，得出结论
+       * i > e1, 表示老的少，新的多，要挂载新的节点
+       */
+
+      const nextPos = e2 + 1
+
+      const anchor = nextPos < c2.length ? c2[nextPos].el : null
+      while (i <= e2) {
+        patch(null, c2[i], container, anchor)
+        i++
+      }
+    } else if (i > e2) {
+      /**
+       * 根据双端对比，得出结果：
+       * i > e2 的情况下，表示老的多，新的少，要把老的里面多于的卸载，卸载的范围是 i - e1
+       */
+      while (i <= e1) {
+        unmount(c1[i])
+        i++
+      }
+    }
+    console.log(i, e1, e2)
   }
 
   const patchElement = (n1, n2) => {
@@ -171,8 +270,6 @@ export function createRenderer(options) {
 
     // 更新 children
     patchChildren(n1, n2)
-
-    console.log(el)
   }
 
   /**
@@ -180,10 +277,10 @@ export function createRenderer(options) {
    * @param n1 老节点，如果有，表示要跟 n2 做 diff 更新，如果没有直接挂载 n2
    * @param n2 新节点
    * @param container 要挂载的容器
+   * @param anchor
    */
-  const patch = (n1, n2, container) => {
+  const patch = (n1, n2, container, anchor = null) => {
     if (n1 === n2) return
-    // debugger
     if (n1 && !isSameVNodeType(n1, n2)) {
       // 如果n1，n2不是同一个类型（标签类型改变，key改变），那就卸载
       unmount(n1)
@@ -191,7 +288,7 @@ export function createRenderer(options) {
     }
 
     if (n1 == null) {
-      mountElement(n2, container)
+      mountElement(n2, container, anchor)
     } else {
       // 更新
       patchElement(n1, n2)
