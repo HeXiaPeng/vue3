@@ -32,7 +32,6 @@ function normalizeChildren(children) {
  * @param children 子节点v
  */
 export function createVNode(type, props?, children = null) {
-  debugger
   children = normalizeChildren(children)
   let shapeFlag = 0
 
