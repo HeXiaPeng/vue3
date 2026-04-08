@@ -284,20 +284,35 @@ export function createRenderer(options) {
        * }
        */
 
+      const keyToNewIndexMap = new Map()
+      const newIndexToOldIndexMap = new Array(e2 - s2 + 1).fill(-1)
       /**
        * 遍历新的 s2 - e2 之间，这些还没更新，做一份key => index map
        */
-      const keyToNewIndexMap = new Map()
       for (let j = s2; j <= e2; j++) {
         const n2 = c2[j]
         keyToNewIndexMap.set(n2.key, j)
       }
 
+      let pos = -1
+      let moved = false
+
+      /**
+       * 遍历老的子节点
+       */
       for (let j = s1; j <= e1; j++) {
         const n1 = c1[j]
         // 看一下这个 key 在新的里面有没有
         const newIndex = keyToNewIndexMap.get(n1.key)
         if (newIndex != null) {
+          if (newIndex > pos) {
+            // 如果每一次都比上一次小，不需要移动
+            pos = newIndex
+          } else {
+            // 如果突然比上一次小，表示需要移动
+            moved = true
+          }
+          newIndexToOldIndexMap[newIndex] = j
           // 如果有就 patch
           patch(n1, c2[newIndex], container)
         } else {
@@ -305,6 +320,10 @@ export function createRenderer(options) {
           unmount(n1)
         }
       }
+
+      const newIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : []
+      // 换成 set，性能好一点
+      const sequenceSet = new Set(newIndexSequence)
 
       for (let j = e2; j >= s2; j--) {
         /**
@@ -314,15 +333,19 @@ export function createRenderer(options) {
         // 拿到它的下一个子元素
         const anchor = c2[j + 1]?.el || null
         if (n2.el) {
-          // 依次进行一个倒序插入，保证顺序
-          hostInsert(n2.el, container, anchor)
+          if (moved) {
+            // 如果不在最长递增子序列中，表示需要移动
+            if (!sequenceSet.has(j)) {
+              // 依次进行一个倒序插入，保证顺序
+              hostInsert(n2.el, container, anchor)
+            }
+          }
         } else {
           // 新的有，老的没有，重新挂载
           patch(null, n2, container, anchor)
         }
       }
     }
-    console.log(i, e1, e2)
   }
 
   const patchElement = (n1, n2) => {
@@ -389,4 +412,64 @@ export function createRenderer(options) {
   return {
     render,
   }
+}
+
+/**
+ * 最长递增子序列
+ * @param arr
+ * @returns
+ */
+
+function getSequence(arr) {
+  const result = []
+  const map = new Map()
+
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i]
+    if (item === -1 || item === undefined) continue
+    if (result.length === 0) {
+      // 如果 result 里面一个都没有，直接将索引放进去
+      result.push(i)
+      continue
+    }
+
+    const lastIndex = result[result.length - 1]
+    const lastItem = arr[lastIndex]
+    if (item > lastItem) {
+      // 如果当前节点大于上一个，直接讲内容放到 result 中
+      result.push(i)
+      map.set(i, lastIndex)
+      continue
+    } else {
+      // item 小于 lastItem
+      let left = 0
+      let right = result.length - 1
+
+      while (left < right) {
+        const mid = (left + right) >> 1
+        const midItem = arr[result[mid]]
+        if (midItem < item) left = mid + 1
+        else right = mid
+      }
+
+      if (arr[result[left]] > item) {
+        if (left > 0) {
+          map.set(i, result[left - 1])
+        }
+        // 找到最合适的，把索引进行替换
+        result[left] = i
+      }
+    }
+
+    // 反向追溯
+    let l = result.length
+    let last = result[l - 1]
+
+    while (l > 0) {
+      l--
+      result[l] = last
+      last = map.get(last)
+    }
+  }
+  return result
 }
