@@ -29,3 +29,7 @@ export function isOn(key) {
 }
 
 export const isArray = Array.isArray
+
+export function hasOwn(object, key) {
+  return Object.hasOwn(object, key)
+}
