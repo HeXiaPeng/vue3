@@ -4,7 +4,6 @@ export function createAppAPI(render) {
     const app = {
       _container: null,
       mount(container) {
-        debugger
         /**
          * 根组件
          * 要挂载的容器

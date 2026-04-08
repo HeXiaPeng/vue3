@@ -8,14 +8,18 @@
     <div id="app"></div>
     <script type="module">
       // import { render } from '../../../node_modules/vue/dist/vue.esm-browser.js'
-      import { h, Text, render, createApp } from '../dist/vue.esm.js'
+      import { h, Text, render, createApp, ref } from '../dist/vue.esm.js'
 
       const Comp = {
+        setup() {
+          const count = ref(0)
+          return { count }
+        },
         render() {
-          return h('div', 'hello world')
+          return h('div', this.count)
         },
       }
-      createApp(Comp, { msg: 'hello' }).mount(app)
+      createApp(Comp).mount('#app')
 
       // setTimeout(() => {
       //   render(vnode2, app)

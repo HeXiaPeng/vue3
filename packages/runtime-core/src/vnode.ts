@@ -1,4 +1,4 @@
-import { isArray, isString, ShapeFlags } from '@vue/shared'
+import { isArray, isObject, isString, ShapeFlags } from '@vue/shared'
 import { isNumber } from '@vue/shared'
 
 /**
@@ -17,6 +17,14 @@ export function isSameVNodeType(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key
 }
 
+function normalizeChildren(children) {
+  if (isNumber(children)) {
+    // 如果 children 是 number，转换为string
+    children = String(children)
+  }
+  return children
+}
+
 /**
  * 创建虚拟节点底层方法
  * @param type 节点类型
@@ -24,10 +32,16 @@ export function isSameVNodeType(n1, n2) {
  * @param children 子节点v
  */
 export function createVNode(type, props?, children = null) {
+  debugger
+  children = normalizeChildren(children)
   let shapeFlag = 0
 
   if (isString(type)) {
+    // div span p h1
     shapeFlag = ShapeFlags.ELEMENT
+  } else if (isObject(type)) {
+    // 有状态的组件
+    shapeFlag = ShapeFlags.STATEFUL_COMPONENT
   }
 
   if (isString(children)) {

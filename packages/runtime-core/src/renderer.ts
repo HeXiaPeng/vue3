@@ -1,6 +1,7 @@
 import { ShapeFlags } from '@vue/shared'
 import { Text, normalizeVnode, isSameVNodeType } from './vnode'
 import { createAppAPI } from './apiCreateApp'
+import { createComponentInstance, setupComponent } from './component'
 
 export function createRenderer(options) {
   // 提供虚拟节点 渲染到页面上的功能
@@ -404,6 +405,39 @@ export function createRenderer(options) {
     }
   }
 
+  const mountComponent = (vnode, container, anchor) => {
+    /**
+     * 1. 创建组件的实例
+     * 2. 初始化组件的状态
+     * 3. 将组件挂载到页面中
+     */
+    // 创建组件的实例
+    const instance = createComponentInstance(vnode)
+
+    // 初始化组件的状态
+    setupComponent(instance)
+    // 调用 render 拿到 subTree, this 指向 setupState
+    const subTree = instance.render.call(instance.setupState)
+    // 将 subTree 挂载到页面
+    patch(null, subTree, container, anchor)
+  }
+
+  /**
+   * 处理组件的挂载与更新
+   * @param n1
+   * @param n2
+   * @param container
+   * @param anchor
+   */
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 == null) {
+      // 挂载
+      mountComponent(n2, container, anchor)
+    } else {
+      // 更新
+    }
+  }
+
   /**
    * 更新和挂载都用这个函数
    * @param n1 老节点，如果有，表示要跟 n2 做 diff 更新，如果没有直接挂载 n2
@@ -432,7 +466,8 @@ export function createRenderer(options) {
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor)
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
-          // TODO: 组件
+          // 组件
+          processComponent(n1, n2, container, anchor)
         }
     }
   }
