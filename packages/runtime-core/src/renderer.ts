@@ -4,6 +4,7 @@ import { createAppAPI } from './apiCreateApp'
 import { createComponentInstance, setupComponent } from './component'
 
 import { ReactiveEffect } from '@vue/reactivity'
+import { queueJob } from './scheduler'
 
 export function createRenderer(options) {
   // 提供虚拟节点 渲染到页面上的功能
@@ -407,18 +408,7 @@ export function createRenderer(options) {
     }
   }
 
-  const mountComponent = (vnode, container, anchor) => {
-    /**
-     * 1. 创建组件的实例
-     * 2. 初始化组件的状态
-     * 3. 将组件挂载到页面中
-     */
-    // 创建组件的实例
-    const instance = createComponentInstance(vnode)
-
-    // 初始化组件的状态
-    setupComponent(instance)
-
+  const setupRenderEffect = (instance, container, anchor) => {
     const componentUpdateFn = () => {
       /**
        * 区分挂载和更新
@@ -443,7 +433,29 @@ export function createRenderer(options) {
 
     // 创建 effect
     const effect = new ReactiveEffect(componentUpdateFn)
-    effect.run()
+    const update = effect.run.bind(effect)
+
+    // 后续所有的更新都是异步的
+    effect.scheduler = () => {
+      queueJob(update)
+    }
+    // 首次加载
+    update()
+  }
+
+  const mountComponent = (vnode, container, anchor) => {
+    /**
+     * 1. 创建组件的实例
+     * 2. 初始化组件的状态
+     * 3. 将组件挂载到页面中
+     */
+    // 创建组件的实例
+    const instance = createComponentInstance(vnode)
+
+    // 初始化组件的状态
+    setupComponent(instance)
+
+    setupRenderEffect(instance, container, anchor)
   }
 
   /**

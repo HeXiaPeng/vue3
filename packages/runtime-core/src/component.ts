@@ -1,6 +1,7 @@
 import { hasOwn, isFunction, isObject } from '@vue/shared'
 import { proxyRefs } from '.'
 import { initProps, normalizePropsOptions } from './componentProps'
+import { nextTick } from './scheduler'
 
 /**
  * 创建组件实例
@@ -44,7 +45,10 @@ const publicPropertiesMap = {
   $slots: instance => instance.slots,
   $refs: instance => instance.refs,
   $nextTick: instance => {
-    // TODO
+    return nextTick.bind(instance)
+  },
+  $forceUpdate: instance => {
+    return () => instance.update
   },
 }
 
@@ -96,7 +100,7 @@ function setupStatefulComponent(instance) {
     const setupContext = createSetupContext(instance)
     // 保存 setupContext
     instance.setupContext = setupContext
-    const setupResult = proxyRefs(type.setup(instance.props, setupContext))
+    const setupResult = type.setup(instance.props, setupContext)
     handleSetupResult(instance, setupResult)
   }
 
@@ -110,9 +114,9 @@ function handleSetupResult(instance, setupResult) {
   if (isFunction(setupResult)) {
     // 返回函数，认定为 render
     instance.render = setupResult
-  } else if (isObject) {
-    // 返回对象，认定为状态
-    instance.setupState = setupResult
+  } else if (isObject(setupResult)) {
+    // 返回对象，认定为状态，需要用 proxyRefs 处理
+    instance.setupState = proxyRefs(setupResult)
   }
 }
 
