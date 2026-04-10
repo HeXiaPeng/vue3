@@ -1,4 +1,4 @@
-import { isFunction } from '@vue/shared'
+import { hasOwn, isFunction, isObject } from '@vue/shared'
 import { proxyRefs } from '.'
 import { initProps, normalizePropsOptions } from './componentProps'
 
@@ -9,7 +9,7 @@ import { initProps, normalizePropsOptions } from './componentProps'
  */
 export function createComponentInstance(vnode) {
   const { type } = vnode
-  const instance = {
+  const instance: any = {
     type,
     vnode,
     render: null,
@@ -21,10 +21,13 @@ export function createComponentInstance(vnode) {
     propsOption: normalizePropsOptions(type.props),
     props: {},
     attrs: {},
+    slots: {},
+    refs: {},
     // 子树，就是 render 的返回结果
     subTree: null,
     isMounted: false,
   }
+  instance.ctx = { _: instance }
   return instance
 }
 
@@ -32,18 +35,85 @@ export function setupComponent(instance) {
   /**
    * 初始化属性
    */
-  const { type } = instance
   initProps(instance)
-  const setupContext = createSetupContext(instance)
+  setupStatefulComponent(instance)
+}
+
+const publicPropertiesMap = {
+  $attrs: instance => instance.attrs,
+  $slots: instance => instance.slots,
+  $refs: instance => instance.refs,
+  $nextTick: instance => {
+    // TODO
+  },
+}
+
+const publicInstanceProxyHandlers = {
+  get(target, key) {
+    const { _: instance } = target
+    const { setupState, props } = instance
+
+    /**
+     * 访问某个属性，先去 setupState 中查找
+     * 如果没有再去 props 中找
+     */
+    if (hasOwn(setupState, key)) {
+      return setupState[key]
+    }
+
+    if (hasOwn(props, key)) {
+      return props[key]
+    }
+
+    if (hasOwn(publicPropertiesMap, key)) {
+      const publicGetter = publicPropertiesMap[key]
+      return publicGetter(instance)
+    }
+
+    /**
+     * 如果实在没有
+     */
+
+    return instance[key]
+  },
+  set(target, key, value) {
+    const { _: instance } = target
+    const { setupState, props } = instance
+
+    if (hasOwn(setupState, key)) {
+      setupState[key] = value
+    }
+    return true
+  },
+}
+
+function setupStatefulComponent(instance) {
+  const { type } = instance
+
+  instance.proxy = new Proxy(instance.ctx, publicInstanceProxyHandlers)
+
   if (isFunction(type.setup)) {
+    const setupContext = createSetupContext(instance)
+    // 保存 setupContext
+    instance.setupContext = setupContext
     const setupResult = proxyRefs(type.setup(instance.props, setupContext))
-    // 拿到setup返回的状态
+    handleSetupResult(instance, setupResult)
+  }
+
+  if (!instance.render) {
+    // 如果上面处理完了，instance 还是没有 render，那就去组件中的配置拿
+    instance.render = type.render
+  }
+}
+
+function handleSetupResult(instance, setupResult) {
+  if (isFunction(setupResult)) {
+    // 返回函数，认定为 render
+    instance.render = setupResult
+  } else if (isObject) {
+    // 返回对象，认定为状态
     instance.setupState = setupResult
   }
-  console.log('instance ==>', instance)
-
-  // 将 render 状态绑定到 instance
-  instance.render = type.render
 }
 
 /**

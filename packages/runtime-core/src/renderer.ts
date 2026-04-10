@@ -426,14 +426,14 @@ export function createRenderer(options) {
 
       if (!instance.isMounted) {
         // 调用 render 拿到 subTree, this 指向 setupState
-        const subTree = instance.render.call(instance.setupState)
+        const subTree = instance.render.call(instance.proxy)
         // 将 subTree 挂载到页面
         patch(null, subTree, container, anchor)
         instance.subTree = subTree
         instance.isMounted = true
       } else {
         const prevSubTree = instance.subTree
-        const subTree = instance.render.call(instance.setupState)
+        const subTree = instance.render.call(instance.proxy)
         // 将 subTree 挂载到页面
         patch(prevSubTree, subTree, container, anchor)
         // 保存当前节点，下一次更新用
