@@ -17,6 +17,13 @@ export function normalizePropsOptions(props = {}) {
   return props
 }
 
+/**
+ * 设置所有 props 的 attrs
+ * @param instance
+ * @param rawProps
+ * @param props
+ * @param attrs
+ */
 function setFullProps(instance, rawProps, props, attrs) {
   const propsOptions = instance.propsOption
   if (rawProps) {
@@ -46,4 +53,31 @@ export function initProps(instance) {
   // attrs 不是响应式的
   instance.attrs = attrs
   return
+}
+
+export function updateProps(instance, nextVNode) {
+  const { props, attrs } = instance
+
+  const rawProps = nextVNode.props
+  /**
+   * 设置所有的
+   */
+  setFullProps(instance, rawProps, props, attrs)
+
+  /**
+   * props = {msg: 'hello', age: 0}
+   * rawProps = {age: 0}
+   * 删除之前有，现在没有的
+   */
+  for (const key in props) {
+    if (!hasOwn(rawProps, key)) {
+      delete props[key]
+    }
+  }
+
+  for (const key in attrs) {
+    if (!hasOwn(rawProps, key)) {
+      delete props[key]
+    }
+  }
 }
