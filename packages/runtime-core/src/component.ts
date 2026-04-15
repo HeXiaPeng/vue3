@@ -29,6 +29,11 @@ export function createComponentInstance(vnode) {
     isMounted: false,
   }
   instance.ctx = { _: instance }
+
+  // instance.emit = (event, ...args) => emit(instance, event, ...args)
+  instance.emit = emit.bind(null, instance)
+  // instance.emit('foo', 1)
+  // instance.$emit('foo', 1)
   return instance
 }
 
@@ -43,6 +48,7 @@ export function setupComponent(instance) {
 const publicPropertiesMap = {
   $el: instance => instance.vnode.el,
   $attrs: instance => instance.attrs,
+  $emit: instance => instance.emit,
   $slots: instance => instance.slots,
   $refs: instance => instance.refs,
   $nextTick: instance => {
@@ -131,5 +137,21 @@ function createSetupContext(instance) {
     get attrs() {
       return instance.attrs
     },
+    emit(event, ...args) {
+      emit(instance, event, ...args)
+    },
+  }
+}
+
+function emit(instance, event, ...args) {
+  /**
+   * 把时间名转换一下
+   * foo => onFoo
+   * bar => onBar
+   */
+  const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
+  const handler = instance.vnode.props[eventName]
+  if (isFunction(handler)) {
+    handler(...args)
   }
 }

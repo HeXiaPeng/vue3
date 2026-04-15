@@ -27,15 +27,12 @@
             count.value++
             count.value++
             count.value++
-
-            container = document.querySelector('#container')
-
-            nextTick(() => {
-              // 这里重新获取一次
-              console.log('dom ==>', container.textContent)
-            })
           }
-          let container
+          const container = document.querySelector('#container')
+
+          nextTick(() => {
+            console.log('dom ==>', container.textContent)
+          })
 
           return () => {
             console.count('render')
