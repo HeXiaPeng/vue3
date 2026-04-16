@@ -1,4 +1,10 @@
-import { isArray, isObject, isString, ShapeFlags } from '@vue/shared'
+import {
+  isArray,
+  isFunction,
+  isObject,
+  isString,
+  ShapeFlags,
+} from '@vue/shared'
 import { isNumber } from '@vue/shared'
 
 /**
@@ -17,11 +23,41 @@ export function isSameVNodeType(n1, n2) {
   return n1.type === n2.type && n1.key === n2.key
 }
 
-function normalizeChildren(children) {
-  if (isNumber(children)) {
+function normalizeChildren(vnode, children) {
+  let { shapeFlag } = vnode
+
+  //regin 处理 type 的 shapeFlag
+  if (isArray(children)) {
+    /**
+     * children = [h('p', 'hello'), h('p', 'world')]
+     */
+    shapeFlag |= ShapeFlags.ARRAY_CHILDREN
+  } else if (isObject(children)) {
+    /**
+     * children = {header: () => h('div', 'hello world')}
+     */
+    if (shapeFlag & ShapeFlags.COMPONENT) {
+      // 如果是组件，那么就是插槽
+      shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+    }
+  } else if (isFunction(children)) {
+    /**
+     * children = () => h('div', ')
+     */
+    shapeFlag |= ShapeFlags.SLOTS_CHILDREN
+    children = { default: children }
+  }
+  if (isNumber(children) || isString(children)) {
     // 如果 children 是 number，转换为string
     children = String(children)
+    shapeFlag |= ShapeFlags.TEXT_CHILDREN
   }
+
+  /**
+   * 处理完了重新赋值 shapeFlag 和 children
+   */
+  vnode.shapeFlag = shapeFlag
+  vnode.children = children
   return children
 }
 
@@ -32,7 +68,6 @@ function normalizeChildren(children) {
  * @param children 子节点v
  */
 export function createVNode(type, props?, children = null) {
-  children = normalizeChildren(children)
   let shapeFlag = 0
 
   if (isString(type)) {
@@ -43,11 +78,6 @@ export function createVNode(type, props?, children = null) {
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
   }
 
-  if (isString(children)) {
-    shapeFlag |= ShapeFlags.TEXT_CHILDREN
-  } else if (isArray(children)) {
-    shapeFlag |= ShapeFlags.ARRAY_CHILDREN
-  }
   const vnode = {
     // 证明是一个虚拟节点
     __v_isVNode: true,
@@ -55,7 +85,7 @@ export function createVNode(type, props?, children = null) {
     type,
     props,
     // hello world
-    children,
+    children: null,
     // 做 diff 用的
     key: props?.key,
     // 虚拟节点要挂载的地方
@@ -63,5 +93,10 @@ export function createVNode(type, props?, children = null) {
     // 如果为9，表示type 是一个 dom 元素，children 是一个字符串
     shapeFlag: shapeFlag,
   }
+
+  /**
+   * children 的标准化 shapeFlag
+   */
+  children = normalizeChildren(vnode, children)
   return vnode
 }
