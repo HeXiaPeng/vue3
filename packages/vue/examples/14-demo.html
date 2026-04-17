@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { render } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+      import {
+        h,
+        createApp,
+        ref,
+        nextTick,
+        getCurrentInstance,
+      } from '../dist/vue.esm.js'
+
+      const Comp = {
+        setup() {
+          // 只能在 setup 中调用
+          const vm = getCurrentInstance()
+          console.log('vm ==>', vm.proxy.$nextTick)
+          return () => {
+            return h('div', [h('p', '我是父组件的p标签')])
+          }
+        },
+      }
+      createApp(Comp, { msg: 'hello' }).mount('#app')
+    </script>
+  </body>
+</html>

@@ -73,12 +73,12 @@ const publicInstanceProxyHandlers = {
   get(target, key) {
     const { _: instance } = target
     const { setupState, props } = instance
-
+    debugger
     /**
      * 访问某个属性，先去 setupState 中查找
      * 如果没有再去 props 中找
      */
-    if (hasOwn(setupState, key)) {
+    if (setupState != null && hasOwn(setupState, key)) {
       return setupState[key]
     }
 
@@ -117,7 +117,18 @@ function setupStatefulComponent(instance) {
     const setupContext = createSetupContext(instance)
     // 保存 setupContext
     instance.setupContext = setupContext
+
+    /**
+     * 设置当前组件实例
+     */
+    setCurrentInstance(instance)
+    // 执行 setup 函数
     const setupResult = type.setup(instance.props, setupContext)
+
+    /**
+     * 清楚当前组件实例
+     */
+    unsetCurrentInstance()
     handleSetupResult(instance, setupResult)
   }
 
@@ -168,4 +179,26 @@ function emit(instance, event, ...args) {
   if (isFunction(handler)) {
     handler(...args)
   }
+}
+
+let currentInstance = null
+
+/**
+ * 设置当前组件实例
+ * @param instance
+ */
+export function setCurrentInstance(instance) {
+  currentInstance = instance
+}
+
+/**
+ * 获取当前组件实例
+ * @returns
+ */
+export function getCurrentInstance() {
+  return currentInstance
+}
+
+function unsetCurrentInstance() {
+  currentInstance = null
 }
