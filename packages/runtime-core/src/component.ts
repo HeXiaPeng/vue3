@@ -73,7 +73,6 @@ const publicInstanceProxyHandlers = {
   get(target, key) {
     const { _: instance } = target
     const { setupState, props } = instance
-    debugger
     /**
      * 访问某个属性，先去 setupState 中查找
      * 如果没有再去 props 中找
@@ -199,6 +198,6 @@ export function getCurrentInstance() {
   return currentInstance
 }
 
-function unsetCurrentInstance() {
+export function unsetCurrentInstance() {
   currentInstance = null
 }

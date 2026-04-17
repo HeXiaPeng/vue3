@@ -29,14 +29,13 @@
           // return () => {
           //   return h('div', count.value)
           // }
-          return {count}
+          return { count }
         },
         render() {
           return h(
             'div',
             {
               onClick: () => {
-                debugger
                 this.count++
                 console.log('点击了 div')
               },
