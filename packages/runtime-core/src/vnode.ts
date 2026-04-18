@@ -104,6 +104,7 @@ export function createVNode(type, props?, children = null) {
     // 如果为9，表示type 是一个 dom 元素，children 是一个字符串
     shapeFlag: shapeFlag,
     ref: normalizeRef(props?.ref),
+    appContext: null,
   }
 
   /**

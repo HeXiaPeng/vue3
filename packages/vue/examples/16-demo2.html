@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { render } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+      import {
+        h,
+        createApp,
+        ref,
+        getCurrentInstance,
+        onBeforeMount,
+        onMounted,
+        onBeforeUpdate,
+        onUpdated,
+        onBeforeUnmount,
+        onUnmounted,
+        useTemplateRef,
+      } from '../dist/vue.esm.js'
+
+      const Child = {
+        setup(props, { attrs, slots, emit, expose }) {
+          const vm = getCurrentInstance()
+          console.log('parent ==>', vm.parent)
+          console.log('child ==>', vm)
+
+          expose({
+            a: ref(0),
+            foo() {
+              console.log('子组件暴露的 foo')
+            },
+          })
+          return () => {
+            return h('div', ['我是子组件'])
+          }
+        },
+      }
+
+      const App = {
+        name: 'APP',
+        setup() {
+          const el = useTemplateRef('elRef')
+          onMounted(() => {
+            // console.log('===>', elRef.value)
+            console.log('elRef', el.value)
+          })
+
+          return () => {
+            return h('div', [
+              h('p', { id: 'container', ref: 'elRef' }, '我是父组件的p标签'),
+              h(Child),
+            ])
+          }
+        },
+      }
+      const app = createApp(App, { msg: 'hello' })
+      app.mount('#app')
+    </script>
+  </body>
+</html>
