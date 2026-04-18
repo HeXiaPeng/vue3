@@ -164,6 +164,45 @@ function createSetupContext(instance) {
     },
     // 插槽
     slots: instance.slots,
+    // 暴露属性
+    expose(exposed) {
+      // 把用户传递的对象，保存到当前实例上
+      instance.exposed = exposed
+    },
+  }
+}
+
+/**
+ * 获取组件公开的属性
+ * @param instance
+ * @returns
+ */
+export function getComponentPublicInstance(instance) {
+  if (instance.exposed) {
+    /**
+     * 用户可以访问 exposed 和 publicPropertiesMap
+     */
+
+    // 查看是否有缓存
+    if (instance.exposedProxy) return instance.exposedProxy
+    // 创建一个代理对象
+    instance.exposedProxy = new Proxy(proxyRefs(instance.exposed), {
+      get(target, key) {
+        if (key in target) {
+          // expose 中的属性
+          return target[key]
+        }
+
+        if (key in publicPropertiesMap) {
+          // $el $props $attrs
+          return publicPropertiesMap[key](instance)
+        }
+      },
+    })
+    return instance.exposedProxy
+  } else {
+    // 如果没有手动暴露，就返回代理对象
+    return instance.proxy
   }
 }
 

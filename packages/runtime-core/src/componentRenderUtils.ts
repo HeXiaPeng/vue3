@@ -1,3 +1,8 @@
+import {
+  setCurrentRenderingInstance,
+  unsetCurrentRenderingInstance,
+} from './renderTemplateRef'
+
 function hasPropsChanged(prevProps, nextProps) {
   const nextKeys = Object.keys(nextProps)
   /**
@@ -46,4 +51,11 @@ export function shouldUpdateComponenet(n1, n2) {
    * 老的有，新的也有
    */
   return hasPropsChanged(prevProps, nextProps)
+}
+
+export function renderComponentRoot(instance) {
+  setCurrentRenderingInstance(instance)
+  const subTree = instance.render.call(instance)
+  unsetCurrentRenderingInstance()
+  return subTree
 }

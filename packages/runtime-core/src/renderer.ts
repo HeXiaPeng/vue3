@@ -4,9 +4,13 @@ import { createAppAPI } from './apiCreateApp'
 import { createComponentInstance, setupComponent } from './component'
 import { ReactiveEffect } from '@vue/reactivity'
 import { queueJob } from './scheduler'
-import { shouldUpdateComponenet } from './componentRenderUtils'
+import {
+  renderComponentRoot,
+  shouldUpdateComponenet,
+} from './componentRenderUtils'
 import { updateProps } from './componentProps'
 import { LifecycleHooks, triggerHooks } from './apiLifecycle'
+import { setRef } from './renderTemplateRef'
 
 export function createRenderer(options) {
   // 提供虚拟节点 渲染到页面上的功能
@@ -48,7 +52,7 @@ export function createRenderer(options) {
   const unmount = vnode => {
     // 卸载
 
-    const { type, shapeFlag, children } = vnode
+    const { shapeFlag, children, ref } = vnode
     if (shapeFlag & ShapeFlags.COMPONENT) {
       // 组件
       unmountComponent(vnode.component)
@@ -59,6 +63,10 @@ export function createRenderer(options) {
       unmountChildren(children)
     }
     hostRemove(vnode.el)
+
+    if (ref != null) {
+      setRef(ref, null)
+    }
   }
 
   const mountChildren = (children, el) => {
@@ -453,7 +461,7 @@ export function createRenderer(options) {
          */
         triggerHooks(instance, LifecycleHooks.BEFORE_MOUNT)
         // 调用 render 拿到 subTree, this 指向 setupState
-        const subTree = render.call(instance.proxy)
+        const subTree = renderComponentRoot(instance)
         // 将 subTree 挂载到页面
         patch(null, subTree, container, anchor)
         // 组件的 vnode 的 el，会指向 subTree 的 el,他们是相同的
@@ -483,7 +491,7 @@ export function createRenderer(options) {
         triggerHooks(instance, LifecycleHooks.BEFORE_UPDATE)
 
         const prevSubTree = instance.subTree
-        const subTree = render.call(instance.proxy)
+        const subTree = renderComponentRoot(instance)
         // 将 subTree 挂载到页面
         patch(prevSubTree, subTree, container, anchor)
         // 组件的 vnode 的 el，会指向 subTree 的 el，它们都是相同的
@@ -586,7 +594,7 @@ export function createRenderer(options) {
     /**
      * 文本，元素， 组件
      */
-    const { shapeFlag, type } = n2
+    const { shapeFlag, type, ref } = n2
 
     switch (type) {
       case Text:
@@ -599,6 +607,10 @@ export function createRenderer(options) {
           // 组件
           processComponent(n1, n2, container, anchor)
         }
+    }
+
+    if (ref != null) {
+      setRef(ref, n2)
     }
   }
 
