@@ -56,9 +56,11 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.COMPONENT) {
       // 组件
       unmountComponent(vnode.component)
-    }
-
-    if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+    } else if (shapeFlag & ShapeFlags.TELEPORT) {
+      // Teleport 卸载
+      unmountChildren(children)
+      return
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       // 子节点是数组
       unmountChildren(children)
     }
@@ -127,8 +129,7 @@ export function createRenderer(options) {
     }
   }
 
-  const patchChildren = (n1, n2, parentComponent) => {
-    const el = n2.el
+  const patchChildren = (n1, n2, el, parentComponent) => {
     /**
      * 1. 新节点它的子节点是 文本
      *    1.1 老的也是文本
@@ -399,7 +400,7 @@ export function createRenderer(options) {
     patchProps(el, oldProps, newProps)
 
     // 更新 children
-    patchChildren(n1, n2, parentComponent)
+    patchChildren(n1, n2, el, parentComponent)
   }
 
   /**
@@ -615,6 +616,12 @@ export function createRenderer(options) {
         } else if (shapeFlag & ShapeFlags.COMPONENT) {
           // 组件
           processComponent(n1, n2, container, anchor, parentComponent)
+        } else if (shapeFlag & ShapeFlags.TELEPORT) {
+          type.process(n1, n2, container, anchor, parentComponent, {
+            mountChildren,
+            patchChildren,
+            options,
+          })
         }
     }
 

@@ -7,6 +7,7 @@ import {
 } from '@vue/shared'
 import { isNumber } from '@vue/shared'
 import { getCurrentRenderingInstance } from './renderTemplateRef'
+import { isTeleport } from './components/Teleport'
 
 /**
  * 文本节点标记
@@ -85,6 +86,9 @@ export function createVNode(type, props?, children = null) {
   if (isString(type)) {
     // div span p h1
     shapeFlag = ShapeFlags.ELEMENT
+  } else if (isTeleport(type)) {
+    // Teleport
+    shapeFlag = ShapeFlags.TELEPORT
   } else if (isObject(type)) {
     // 有状态的组件
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
