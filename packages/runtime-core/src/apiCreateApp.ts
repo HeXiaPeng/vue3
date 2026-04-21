@@ -24,6 +24,9 @@ export function createAppAPI(render) {
         // 卸载
         render(null, app._container)
       },
+      provide(key, value) {
+        context.provides[key] = value
+      },
     }
     return app
   }

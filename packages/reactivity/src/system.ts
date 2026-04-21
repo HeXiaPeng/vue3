@@ -211,7 +211,7 @@ export function clearTracking(link: Link) {
      */
     link.nextDep = linkPool
     linkPool = link
-    console.log('不要了，使用linkPool保存')
+    // console.log('不要了，使用linkPool保存')
 
     link = nextDep
   }

@@ -37,6 +37,7 @@ export function createComponentInstance(vnode, parent) {
     // 子树，就是 render 的返回结果
     subTree: null,
     isMounted: false,
+    provides: parent ? parent.provides : appContext.provides,
   }
   instance.ctx = { _: instance }
 
