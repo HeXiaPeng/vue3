@@ -1,3 +1,4 @@
+import { ShapeFlags } from '@vue/shared'
 import {
   setCurrentRenderingInstance,
   unsetCurrentRenderingInstance,
@@ -54,8 +55,21 @@ export function shouldUpdateComponenet(n1, n2) {
 }
 
 export function renderComponentRoot(instance) {
-  setCurrentRenderingInstance(instance)
-  const subTree = instance.render.call(instance)
-  unsetCurrentRenderingInstance()
-  return subTree
+  const { vnode } = instance
+  if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+    setCurrentRenderingInstance(instance)
+    const subTree = instance.render.call(instance)
+    unsetCurrentRenderingInstance()
+    return subTree
+  } else {
+    // 函数式组件
+
+    return vnode.type(instance.props, {
+      get attrs() {
+        return instance.attrs
+      },
+      slots: instance.slots,
+      emit: instance.emit,
+    })
+  }
 }

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Title</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { render } from '../../../node_modules/vue/dist/vue.esm-browser.js'
+      import { h, createApp, ref, provide, inject } from '../dist/vue.esm.js'
+
+      function App(props, { emit }) {
+        setTimeout(() => {
+          emit('foo')
+        }, 1000)
+        return h('div', props.msg)
+      }
+
+      App.props = ['msg']
+
+      const app = createApp(App, {
+        msg: 'hello',
+        count: '0',
+        onFoo() {
+          console.log('onFoo')
+        },
+      })
+
+      app.mount('#app')
+    </script>
+  </body>
+</html>

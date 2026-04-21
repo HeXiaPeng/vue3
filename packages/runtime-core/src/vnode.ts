@@ -81,13 +81,18 @@ function normalizeRef(ref) {
 export function createVNode(type, props?, children = null) {
   let shapeFlag = 0
 
+  //#region 处理 type 的 shapeFlag
   if (isString(type)) {
     // div span p h1
     shapeFlag = ShapeFlags.ELEMENT
   } else if (isObject(type)) {
     // 有状态的组件
     shapeFlag = ShapeFlags.STATEFUL_COMPONENT
+  } else if (isFunction(type)) {
+    // 函数式组件
+    shapeFlag = ShapeFlags.FUNCTIONAL_COMPONENT
   }
+  //#endregion
 
   const vnode = {
     // 证明是一个虚拟节点

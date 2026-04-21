@@ -28,7 +28,7 @@ export function createComponentInstance(vnode, parent) {
     /**
      * 用户声明的组件 props
      */
-    propsOption: normalizePropsOptions(type.props),
+    propsOptions: normalizePropsOptions(type.props),
     props: {},
     attrs: {},
     // 组件的插槽
