@@ -548,6 +548,7 @@ export function createRenderer(options) {
     if (isKeepAlive(vnode.type)) {
       instance.ctx.renderer = {
         options,
+        unmount,
       }
     }
 

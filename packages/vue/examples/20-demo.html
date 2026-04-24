@@ -53,13 +53,28 @@
         },
       }
 
+      const Comp3 = {
+        name: 'Comp3',
+        setup() {
+          onMounted(() => {
+            console.log('挂载Comp3')
+          })
+          onUnmounted(() => {
+            console.log('卸载Comp3')
+          })
+          return () => {
+            return h('div', ['Comp3', h('input')])
+          }
+        },
+      }
+
       const App = {
         name: 'APP',
         setup() {
-          const components = [Comp1, Comp2]
+          const components = [Comp1, Comp2, Comp3]
           const index = ref(0)
           function onClick() {
-            index.value = (index.value + 1) % 2
+            index.value = (index.value + 1) % 3
           }
           return () => {
             return h('div', [
@@ -70,7 +85,7 @@
                 },
                 '切换组件',
               ),
-              h(KeepAlive, null, () => h(components[index.value])),
+              h(KeepAlive, { max: 2 }, () => h(components[index.value])),
             ])
           }
         },

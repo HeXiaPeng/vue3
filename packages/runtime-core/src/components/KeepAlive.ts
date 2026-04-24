@@ -6,10 +6,11 @@ export const isKeepAlive = type => type?.__isKeepAlive
 export const KeepAlive = {
   name: 'KeepAlive',
   __isKeepAlive: true,
+  props: ['max'],
   setup(props, { slots }) {
     const instance = getCurrentInstance()
 
-    const { options } = instance.ctx.renderer
+    const { options, unmount } = instance.ctx.renderer
     const { createElement, insert } = options
     /**
      * 缓存：
@@ -17,8 +18,8 @@ export const KeepAlive = {
      * or
      * key => vnode
      */
-    const cache = new Map()
 
+    const cache = new LRUCahe(props.max)
     /**
      * 保存停用 dom 元素
      */
@@ -62,7 +63,14 @@ export const KeepAlive = {
       /**
        * 这一块，就是处理缓存
        */
-      cache.set(key, vnode)
+      const _vnode = cache.set(key, vnode)
+      if (_vnode) {
+        /**
+         * 卸载逻辑
+         */
+        resetShapeFlag(_vnode)
+        unmount(_vnode)
+      }
 
       /**
        * 先不让卸载
@@ -72,4 +80,48 @@ export const KeepAlive = {
       return vnode
     }
   },
+}
+
+function resetShapeFlag(vnode) {
+  /**
+   * 删除标记
+   */
+  vnode.shapeFlag &= ~ShapeFlags.COMPONENT_KEPT_ALIVE
+  vnode.shapeFlag &= ~ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE
+}
+class LRUCahe {
+  cache = new Map()
+  max
+  constructor(max = Infinity) {
+    this.max = max
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) return
+    /**
+     * 移动位置，放到最后
+     */
+    const value = this.cache.get(key)
+    this.cache.delete(key)
+    this.cache.set(key, value)
+    return value
+  }
+
+  set(key, value) {
+    let vnode
+    if (this.cache.has(key)) {
+      this.cache.delete(key)
+    } else {
+      if (this.cache.size >= this.max) {
+        /**
+         * 之前没有的，把最久没有使用过的，给丢掉
+         */
+        const firstKey = this.cache.keys().next().value
+        vnode = this.cache.get(firstKey)
+        this.cache.delete(firstKey)
+      }
+    }
+    this.cache.set(key, value)
+    return vnode
+  }
 }
