@@ -65,7 +65,7 @@ export function link(dep, sub) {
    */
   let newLink: Link
   if (linkPool) {
-    console.log('复用了linkPool')
+    // console.log('复用了linkPool')
     newLink = linkPool
     linkPool = linkPool.nextDep
     newLink.nextDep = nextDep

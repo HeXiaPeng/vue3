@@ -53,7 +53,7 @@ export function createRenderer(options) {
   const unmount = vnode => {
     // 卸载
 
-    const { shapeFlag, children, ref } = vnode
+    const { shapeFlag, children, ref, transition } = vnode
 
     if (shapeFlag & ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE) {
       const parentComponent = vnode.component.parent
@@ -72,7 +72,18 @@ export function createRenderer(options) {
       // 子节点是数组
       unmountChildren(children)
     }
-    hostRemove(vnode.el)
+
+    const remove = () => {
+      // 移动 dom 元素
+      hostRemove(vnode.el)
+    }
+
+    if (transition) {
+      // 如果是过渡组件
+      transition.leave(vnode.el, remove)
+    } else {
+      remove()
+    }
 
     if (ref != null) {
       setRef(ref, null)
@@ -95,7 +106,7 @@ export function createRenderer(options) {
      * 3. 挂载它的子节点
      */
 
-    const { type, props, children, shapeFlag } = vnode
+    const { type, props, children, shapeFlag, transition } = vnode
     // 创建 dom 元素 type = div p span
     const el = hostCreateElement(type)
 
@@ -115,8 +126,18 @@ export function createRenderer(options) {
       mountChildren(children, el, parentComponent)
     }
 
+    if (transition) {
+      // 过渡组件插入之前
+      transition.beforeEnter?.(el)
+    }
+
     // 将 el 挂载到 container 中
     hostInsert(el, container, anchor)
+
+    if (transition) {
+      // 过渡组件插入之后
+      transition.enter?.(el)
+    }
   }
 
   const patchProps = (el, oldProps, newProps) => {
@@ -510,7 +531,7 @@ export function createRenderer(options) {
         // 将 subTree 挂载到页面
         patch(prevSubTree, subTree, container, anchor, instance)
         // 组件的 vnode 的 el，会指向 subTree 的 el，它们都是相同的
-        next.el = subTree.el
+        next.el = subTree?.el
         // 保存当前节点，下一次更新用
         instance.subTree = subTree
 
@@ -619,6 +640,12 @@ export function createRenderer(options) {
    */
   const patch = (n1, n2, container, anchor = null, parentComponent = null) => {
     if (n1 === n2) return
+
+    if (n1 && n2 == null) {
+      unmount(n1)
+      return
+    }
+
     if (n1 && !isSameVNodeType(n1, n2)) {
       // 卸载 n1 之前，拿到 n1 的下一个节点，挂载的时候将n2挂载n1之前到位置
       anchor = hostNextSibling(n1.el)
