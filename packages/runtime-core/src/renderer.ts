@@ -501,7 +501,7 @@ export function createRenderer(options) {
         // 将 subTree 挂载到页面
         patch(null, subTree, container, anchor, instance)
         // 组件的 vnode 的 el，会指向 subTree 的 el,他们是相同的
-        vnode.el = subTree.el
+        vnode.el = subTree?.el
         instance.subTree = subTree
         instance.isMounted = true
 
@@ -653,6 +653,8 @@ export function createRenderer(options) {
       unmount(n1)
       n1 = null
     }
+
+    if (n2 == null) return
 
     /**
      * 文本，元素， 组件

@@ -69,7 +69,7 @@ const BaseTransition = {
 
     return () => {
       const vnode = slots.default()
-      if (!vnode) return
+      if (!vnode) return null
       if (props.appear || vm.isMounted) {
         vnode.transition = props
       } else {
